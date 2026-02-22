@@ -7,62 +7,71 @@ class HudComponent extends PositionComponent with HasGameRef<DinoGame> {
   void render(Canvas canvas) {
     if (!gameRef.isRunning) return;
 
+    final isMobile = gameRef.size.x < 600;
+    final scoreFs = isMobile ? 10.0 : 14.0;
+    final bestFs = isMobile ? 8.0 : 10.0;
+    final levelFs = isMobile ? 7.0 : 9.0;
+    final bottomFs = isMobile ? 6.0 : 8.0;
+
     final scorePaint = TextPaint(
-      style: const TextStyle(
-        fontSize: 14,
-        color: Color(0xFF00FFFF),
+      style: TextStyle(
+        fontSize: scoreFs,
+        color: const Color(0xFF00FFFF),
         fontWeight: FontWeight.bold,
         fontFamily: 'PressStart2P',
       ),
     );
 
     final bestPaint = TextPaint(
-      style: const TextStyle(
-        fontSize: 10,
-        color: Color(0xFFBB86FC),
+      style: TextStyle(
+        fontSize: bestFs,
+        color: const Color(0xFFBB86FC),
         fontFamily: 'PressStart2P',
       ),
     );
 
     final levelPaint = TextPaint(
-      style: const TextStyle(
-        fontSize: 9,
-        color: Color(0xFFFF6B9D),
+      style: TextStyle(
+        fontSize: levelFs,
+        color: const Color(0xFFFF6B9D),
         fontFamily: 'PressStart2P',
       ),
     );
 
     final bottomPaint = TextPaint(
       style: TextStyle(
-        fontSize: 8,
+        fontSize: bottomFs,
         color: const Color(0xFF00FFFF).withOpacity(0.5),
         fontFamily: 'PressStart2P',
       ),
     );
 
+    // Score — top right, always visible
     scorePaint.render(
       canvas,
       'SCORE ${gameRef.score.toString().padLeft(5, '0')}',
-      Vector2(gameRef.size.x - 260, 20),
+      Vector2(gameRef.size.x - (isMobile ? 140 : 220), 16),
     );
 
     bestPaint.render(
       canvas,
       'BEST  ${gameRef.highScore.toString().padLeft(5, '0')}',
-      Vector2(gameRef.size.x - 260, 46),
+      Vector2(gameRef.size.x - (isMobile ? 140 : 220), 34),
     );
 
+    // Level — top left
     final speedLevel = ((gameRef.gameSpeed - 300) / 400 * 5).floor() + 1;
     levelPaint.render(
       canvas,
       'LV.$speedLevel',
-      Vector2(20, 20),
+      Vector2(12, 16),
     );
 
+    // Bottom hint
     bottomPaint.render(
       canvas,
-      'BREAKING AN LLM  |  SPACE/TAP > JUMP',
-      Vector2(20, gameRef.size.y - 28),
+      isMobile ? 'TAP > JUMP' : 'BREAKING AN LLM  |  SPACE/TAP > JUMP',
+      Vector2(12, gameRef.size.y - 20),
     );
   }
 }

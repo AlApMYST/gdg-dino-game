@@ -1,9 +1,9 @@
+import 'dart:math';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
 import 'package:flutter/material.dart';
 import 'dino_game.dart';
 import 'cactus.dart';
-import 'dart:math';
 
 class Player extends PositionComponent
     with HasGameRef<DinoGame>, CollisionCallbacks {
@@ -21,16 +21,23 @@ class Player extends PositionComponent
   bool _legToggle = false;
   double _squishY = 1.0;
   double _animTimer = 0;
+  double _scale = 1.0;
 
-  Player() : super(size: Vector2(70, 80));
+  Player() : super(size: Vector2(70, 85));
+
+  double _calcGroundY() {
+    return gameRef.size.y - 82 - size.y;
+  }
 
   @override
   Future<void> onLoad() async {
-    _groundY = gameRef.size.y - 100 - size.y;
-    position = Vector2(80, _groundY);
+    _scale = (gameRef.size.x / 400).clamp(0.5, 1.0);
+    size = Vector2(70 * _scale, 85 * _scale);
+    _groundY = _calcGroundY();
+    position = Vector2(60, _groundY);
     add(RectangleHitbox(
-      size: Vector2(50, 65),
-      position: Vector2(10, 8),
+      size: Vector2(42 * _scale, 55 * _scale),
+      position: Vector2(14 * _scale, 10 * _scale),
     ));
   }
 
@@ -44,8 +51,10 @@ class Player extends PositionComponent
   }
 
   void reset() {
-    _groundY = gameRef.size.y - 100 - size.y;
-    position = Vector2(80, _groundY);
+    _scale = (gameRef.size.x / 400).clamp(0.5, 1.0);
+    size = Vector2(70 * _scale, 85 * _scale);
+    _groundY = _calcGroundY();
+    position = Vector2(60, _groundY);
     _velocityY = 0;
     _isOnGround = true;
     _jumpCount = 0;
@@ -94,6 +103,8 @@ class Player extends PositionComponent
   }
 
   void _drawRobot(Canvas canvas) {
+    final s = _scale;
+
     final suitPaint = Paint()..color = const Color(0xFFCCCCDD);
     final darkSuitPaint = Paint()..color = const Color(0xFF9999AA);
     final cyanPaint = Paint()..color = const Color(0xFF00FFFF);
@@ -103,135 +114,151 @@ class Player extends PositionComponent
 
     final glowPaint = Paint()
       ..color = const Color(0xFF00FFFF).withOpacity(0.35)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 8 * s);
 
-    // Body bob while running
-    final bob = _isOnGround ? (sin(_animTimer * 12) * 2) : 0.0;
+    final bob = _isOnGround ? (sin(_animTimer * 12) * 2 * s) : 0.0;
 
     canvas.save();
     canvas.translate(0, bob);
+
+    // ── LEGS ──
     if (_isOnGround) {
       if (_legToggle) {
-        _drawLeg(canvas, darkSuitPaint, 18, 58, -12);
-        _drawLeg(canvas, darkSuitPaint, 38, 58, 12);
+        _drawLeg(canvas, darkSuitPaint, 20 * s, 62 * s, -12);
+        _drawLeg(canvas, darkSuitPaint, 40 * s, 62 * s, 12);
       } else {
-        _drawLeg(canvas, darkSuitPaint, 18, 58, 12);
-        _drawLeg(canvas, darkSuitPaint, 38, 58, -12);
+        _drawLeg(canvas, darkSuitPaint, 20 * s, 62 * s, 12);
+        _drawLeg(canvas, darkSuitPaint, 40 * s, 62 * s, -12);
       }
     } else {
-      _drawLeg(canvas, darkSuitPaint, 18, 58, -20);
-      _drawLeg(canvas, darkSuitPaint, 38, 58, -20);
+      _drawLeg(canvas, darkSuitPaint, 20 * s, 62 * s, -20);
+      _drawLeg(canvas, darkSuitPaint, 40 * s, 62 * s, -20);
     }
+
+    // ── BODY ──
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        const Rect.fromLTWH(12, 36, 46, 28),
-        const Radius.circular(8),
+        Rect.fromLTWH(14 * s, 38 * s, 42 * s, 26 * s),
+        Radius.circular(8 * s),
       ),
       suitPaint,
     );
+
+    // Chest panel glow
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        const Rect.fromLTWH(22, 42, 26, 14),
-        const Radius.circular(4),
+        Rect.fromLTWH(22 * s, 43 * s, 26 * s, 13 * s),
+        Radius.circular(4 * s),
       ),
       glowPaint,
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        const Rect.fromLTWH(22, 42, 26, 14),
-        const Radius.circular(4),
+        Rect.fromLTWH(22 * s, 43 * s, 26 * s, 13 * s),
+        Radius.circular(4 * s),
       ),
       Paint()..color = const Color(0xFF00FFFF).withOpacity(0.5),
     );
-    canvas.drawCircle(const Offset(30, 49), 3, cyanPaint);
-    canvas.drawCircle(const Offset(40, 49), 3, purplePaint);
+
+    // Chest dots
+    canvas.drawCircle(Offset(31 * s, 50 * s), 3 * s, cyanPaint);
+    canvas.drawCircle(Offset(41 * s, 50 * s), 3 * s, purplePaint);
+
+    // ── ARMS ──
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        const Rect.fromLTWH(2, 37, 11, 20),
-        const Radius.circular(5),
+        Rect.fromLTWH(4 * s, 38 * s, 11 * s, 20 * s),
+        Radius.circular(5 * s),
       ),
       darkSuitPaint,
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        const Rect.fromLTWH(57, 37, 11, 20),
-        const Radius.circular(5),
+        Rect.fromLTWH(55 * s, 38 * s, 11 * s, 20 * s),
+        Radius.circular(5 * s),
       ),
       darkSuitPaint,
     );
 
-    canvas.drawCircle(const Offset(35, 22), 22, glowPaint);
+    // ── HELMET ──
+    canvas.drawCircle(Offset(35 * s, 22 * s), 22 * s, glowPaint);
+    canvas.drawCircle(Offset(35 * s, 22 * s), 20 * s, suitPaint);
 
-    
-    canvas.drawCircle(const Offset(35, 22), 20, suitPaint);
+    // Visor
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        const Rect.fromLTWH(20, 12, 30, 20),
-        const Radius.circular(8),
+        Rect.fromLTWH(20 * s, 12 * s, 30 * s, 20 * s),
+        Radius.circular(8 * s),
       ),
       darkPaint,
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        const Rect.fromLTWH(22, 14, 26, 16),
-        const Radius.circular(6),
+        Rect.fromLTWH(22 * s, 14 * s, 26 * s, 16 * s),
+        Radius.circular(6 * s),
       ),
       Paint()..color = const Color(0xFF00FFFF).withOpacity(0.15),
     );
-    canvas.drawCircle(const Offset(29, 22), 4, cyanPaint);
-    canvas.drawCircle(const Offset(41, 22), 4, cyanPaint);
+
+    // Eyes
+    canvas.drawCircle(Offset(29 * s, 22 * s), 4 * s, cyanPaint);
+    canvas.drawCircle(Offset(41 * s, 22 * s), 4 * s, cyanPaint);
     canvas.drawCircle(
-      const Offset(29, 22),
-      5,
+      Offset(29 * s, 22 * s),
+      5 * s,
       Paint()
         ..color = const Color(0xFF00FFFF).withOpacity(0.3)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4 * s),
     );
     canvas.drawCircle(
-      const Offset(41, 22),
-      5,
+      Offset(41 * s, 22 * s),
+      5 * s,
       Paint()
         ..color = const Color(0xFF00FFFF).withOpacity(0.3)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4 * s),
     );
-    canvas.drawCircle(const Offset(30, 23), 2, darkPaint);
-    canvas.drawCircle(const Offset(42, 23), 2, darkPaint);
-    canvas.drawCircle(const Offset(31, 21), 1, whitePaint);
-    canvas.drawCircle(const Offset(43, 21), 1, whitePaint);
+    canvas.drawCircle(Offset(30 * s, 23 * s), 2 * s, darkPaint);
+    canvas.drawCircle(Offset(42 * s, 23 * s), 2 * s, darkPaint);
+    canvas.drawCircle(Offset(31 * s, 21 * s), 1 * s, whitePaint);
+    canvas.drawCircle(Offset(43 * s, 21 * s), 1 * s, whitePaint);
+
+    // ── ANTENNA ──
     canvas.drawLine(
-      const Offset(35, 2),
-      const Offset(35, 12),
+      Offset(35 * s, 2 * s),
+      Offset(35 * s, 12 * s),
       Paint()
         ..color = const Color(0xFFCCCCDD)
-        ..strokeWidth = 2.5,
+        ..strokeWidth = 2.5 * s,
     );
     canvas.drawCircle(
-      const Offset(35, 2),
-      4,
+      Offset(35 * s, 2 * s),
+      4 * s,
       Paint()
         ..color = purplePaint.color.withOpacity(0.4)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4 * s),
     );
-    canvas.drawCircle(const Offset(35, 2), 3, purplePaint);
+    canvas.drawCircle(Offset(35 * s, 2 * s), 3 * s, purplePaint);
 
     canvas.restore();
   }
 
   void _drawLeg(Canvas canvas, Paint paint, double x, double y, double angle) {
+    final s = _scale;
     canvas.save();
     canvas.translate(x, y);
     canvas.rotate(angle * 3.14159 / 180);
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        const Rect.fromLTWH(-5, 0, 11, 20),
-        const Radius.circular(5),
+        Rect.fromLTWH(-5 * s, 0, 11 * s, 18 * s),
+        Radius.circular(5 * s),
       ),
       paint,
     );
+    // Boot
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        const Rect.fromLTWH(-6, 16, 13, 8),
-        const Radius.circular(3),
+        Rect.fromLTWH(-6 * s, 14 * s, 13 * s, 7 * s),
+        Radius.circular(3 * s),
       ),
       Paint()..color = const Color(0xFF00FFFF).withOpacity(0.7),
     );
