@@ -355,7 +355,7 @@ class GameOverScreen extends StatelessWidget {
                 ),
                 SizedBox(height: spacing * 0.3),
                 Text(
-                  'JOIN US ON THE 28TH!',
+                  'JOIN US ON OUR NEXT EVENT!',
                   style: TextStyle(
                     fontSize: taglineSize,
                     color: const Color(0xFF00FF88),

@@ -23,7 +23,7 @@ class Player extends PositionComponent
   double _animTimer = 0;
   double _scale = 1.0;
 
-  Player() : super(size: Vector2(70, 85));
+  Player() : super(size: Vector2(75, 90)); // Slightly wider to accommodate the backpack
 
   double _calcGroundY() {
     return gameRef.size.y - 82 - size.y;
@@ -32,12 +32,12 @@ class Player extends PositionComponent
   @override
   Future<void> onLoad() async {
     _scale = (gameRef.size.x / 400).clamp(0.5, 1.0);
-    size = Vector2(70 * _scale, 85 * _scale);
+    size = Vector2(75 * _scale, 90 * _scale);
     _groundY = _calcGroundY();
     position = Vector2(60, _groundY);
     add(RectangleHitbox(
-      size: Vector2(42 * _scale, 55 * _scale),
-      position: Vector2(14 * _scale, 10 * _scale),
+      size: Vector2(45 * _scale, 60 * _scale),
+      position: Vector2(15 * _scale, 10 * _scale),
     ));
   }
 
@@ -52,7 +52,7 @@ class Player extends PositionComponent
 
   void reset() {
     _scale = (gameRef.size.x / 400).clamp(0.5, 1.0);
-    size = Vector2(70 * _scale, 85 * _scale);
+    size = Vector2(75 * _scale, 90 * _scale);
     _groundY = _calcGroundY();
     position = Vector2(60, _groundY);
     _velocityY = 0;
@@ -98,23 +98,23 @@ class Player extends PositionComponent
     canvas.translate(size.x / 2, size.y);
     canvas.scale(1.0 / _squishY, _squishY);
     canvas.translate(-size.x / 2, -size.y);
-    _drawRobot(canvas);
+    _drawAstronaut(canvas);
     canvas.restore();
   }
 
-  void _drawRobot(Canvas canvas) {
+void _drawAstronaut(Canvas canvas) {
     final s = _scale;
 
-    final suitPaint = Paint()..color = const Color(0xFFCCCCDD);
-    final darkSuitPaint = Paint()..color = const Color(0xFF9999AA);
-    final cyanPaint = Paint()..color = const Color(0xFF00FFFF);
-    final purplePaint = Paint()..color = const Color(0xFFBB86FC);
-    final darkPaint = Paint()..color = const Color(0xFF0A0015);
-    final whitePaint = Paint()..color = Colors.white;
-
+    // Color Palette based on your image
+    final suitPaint = Paint()..color = const Color(0xFFE8E9F3); // Off-white
+    final shadePaint = Paint()..color = const Color(0xFF8B8B9E); // Light purple-grey
+    final darkPaint = Paint()..color = const Color(0xFF2B2B45); // Dark purple-blue
+    final screenPaint = Paint()..color = const Color(0xFF0F172A); // Almost black
+    final cyanPaint = Paint()..color = const Color(0xFF00E5FF); // Bright Cyan
+    
     final glowPaint = Paint()
-      ..color = const Color(0xFF00FFFF).withOpacity(0.35)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 8 * s);
+      ..color = const Color(0xFF00E5FF).withOpacity(0.5)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 10 * s);
 
     final bob = _isOnGround ? (sin(_animTimer * 12) * 2 * s) : 0.0;
 
@@ -124,121 +124,125 @@ class Player extends PositionComponent
     // ── LEGS ──
     if (_isOnGround) {
       if (_legToggle) {
-        _drawLeg(canvas, darkSuitPaint, 20 * s, 62 * s, -12);
-        _drawLeg(canvas, darkSuitPaint, 40 * s, 62 * s, 12);
+        _drawLeg(canvas, darkPaint, 25 * s, 65 * s, -15);
+        _drawLeg(canvas, darkPaint, 45 * s, 65 * s, 25);
       } else {
-        _drawLeg(canvas, darkSuitPaint, 20 * s, 62 * s, 12);
-        _drawLeg(canvas, darkSuitPaint, 40 * s, 62 * s, -12);
+        _drawLeg(canvas, darkPaint, 25 * s, 65 * s, 15);
+        _drawLeg(canvas, darkPaint, 45 * s, 65 * s, -25);
       }
     } else {
-      _drawLeg(canvas, darkSuitPaint, 20 * s, 62 * s, -20);
-      _drawLeg(canvas, darkSuitPaint, 40 * s, 62 * s, -20);
+      _drawLeg(canvas, darkPaint, 25 * s, 65 * s, -30);
+      _drawLeg(canvas, darkPaint, 45 * s, 65 * s, -10);
     }
+
+    // ── BACKPACK ──
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(8 * s, 35 * s, 15 * s, 25 * s),
+        Radius.circular(4 * s),
+      ),
+      darkPaint,
+    );
+    // Backpack highlight
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(10 * s, 37 * s, 11 * s, 21 * s),
+        Radius.circular(2 * s),
+      ),
+      shadePaint,
+    );
+
+    // ── BACK ARM ──
+    _drawArm(canvas, darkPaint, suitPaint, 22 * s, 45 * s, _isOnGround && _legToggle ? -30 : 30);
 
     // ── BODY ──
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(14 * s, 38 * s, 42 * s, 26 * s),
+        Rect.fromLTWH(20 * s, 38 * s, 35 * s, 28 * s),
+        Radius.circular(6 * s),
+      ),
+      suitPaint,
+    );
+    // Body shading/details
+    canvas.drawRect(Rect.fromLTWH(30 * s, 48 * s, 15 * s, 10 * s), shadePaint);
+    canvas.drawRect(Rect.fromLTWH(32 * s, 50 * s, 4 * s, 4 * s), darkPaint);
+    canvas.drawRect(Rect.fromLTWH(38 * s, 50 * s, 4 * s, 4 * s), darkPaint);
+
+    // ── FRONT ARM ──
+    _drawArm(canvas, darkPaint, suitPaint, 45 * s, 45 * s, _isOnGround && _legToggle ? 30 : -30);
+
+    // ── HELMET ──
+    // Helmet Base
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(18 * s, 5 * s, 48 * s, 38 * s),
         Radius.circular(8 * s),
       ),
       suitPaint,
     );
-
-    // Chest panel glow
+    
+    // Helmet Shading (bottom edge)
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(22 * s, 43 * s, 26 * s, 13 * s),
+        Rect.fromLTWH(20 * s, 35 * s, 44 * s, 6 * s),
         Radius.circular(4 * s),
       ),
-      glowPaint,
+      shadePaint,
     );
+
+    // Screen Outline / Bezel
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(22 * s, 43 * s, 26 * s, 13 * s),
+        Rect.fromLTWH(24 * s, 10 * s, 38 * s, 25 * s),
         Radius.circular(4 * s),
-      ),
-      Paint()..color = const Color(0xFF00FFFF).withOpacity(0.5),
-    );
-
-    // Chest dots
-    canvas.drawCircle(Offset(31 * s, 50 * s), 3 * s, cyanPaint);
-    canvas.drawCircle(Offset(41 * s, 50 * s), 3 * s, purplePaint);
-
-    // ── ARMS ──
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(4 * s, 38 * s, 11 * s, 20 * s),
-        Radius.circular(5 * s),
-      ),
-      darkSuitPaint,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(55 * s, 38 * s, 11 * s, 20 * s),
-        Radius.circular(5 * s),
-      ),
-      darkSuitPaint,
-    );
-
-    // ── HELMET ──
-    canvas.drawCircle(Offset(35 * s, 22 * s), 22 * s, glowPaint);
-    canvas.drawCircle(Offset(35 * s, 22 * s), 20 * s, suitPaint);
-
-    // Visor
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(20 * s, 12 * s, 30 * s, 20 * s),
-        Radius.circular(8 * s),
       ),
       darkPaint,
     );
+
+    // Screen Inner
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(22 * s, 14 * s, 26 * s, 16 * s),
-        Radius.circular(6 * s),
+        Rect.fromLTWH(26 * s, 12 * s, 34 * s, 21 * s),
+        Radius.circular(3 * s),
       ),
-      Paint()..color = const Color(0xFF00FFFF).withOpacity(0.15),
+      screenPaint,
     );
 
-    // Eyes
-    canvas.drawCircle(Offset(29 * s, 22 * s), 4 * s, cyanPaint);
-    canvas.drawCircle(Offset(41 * s, 22 * s), 4 * s, cyanPaint);
-    canvas.drawCircle(
-      Offset(29 * s, 22 * s),
-      5 * s,
-      Paint()
-        ..color = const Color(0xFF00FFFF).withOpacity(0.3)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4 * s),
-    );
-    canvas.drawCircle(
-      Offset(41 * s, 22 * s),
-      5 * s,
-      Paint()
-        ..color = const Color(0xFF00FFFF).withOpacity(0.3)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4 * s),
-    );
-    canvas.drawCircle(Offset(30 * s, 23 * s), 2 * s, darkPaint);
-    canvas.drawCircle(Offset(42 * s, 23 * s), 2 * s, darkPaint);
-    canvas.drawCircle(Offset(31 * s, 21 * s), 1 * s, whitePaint);
-    canvas.drawCircle(Offset(43 * s, 21 * s), 1 * s, whitePaint);
+    // Glowing Face / Visor Screen Elements
+    canvas.drawRect(Rect.fromLTWH(30 * s, 15 * s, 25 * s, 15 * s), glowPaint);
 
-    // ── ANTENNA ──
-    canvas.drawLine(
-      Offset(35 * s, 2 * s),
-      Offset(35 * s, 12 * s),
-      Paint()
-        ..color = const Color(0xFFCCCCDD)
-        ..strokeWidth = 2.5 * s,
-    );
-    canvas.drawCircle(
-      Offset(35 * s, 2 * s),
-      4 * s,
-      Paint()
-        ..color = purplePaint.color.withOpacity(0.4)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, 4 * s),
-    );
-    canvas.drawCircle(Offset(35 * s, 2 * s), 3 * s, purplePaint);
+    // "Eyes" / Digital Expression
+    canvas.drawRect(Rect.fromLTWH(32 * s, 16 * s, 8 * s, 8 * s), cyanPaint); // Left eye
+    canvas.drawRect(Rect.fromLTWH(46 * s, 16 * s, 8 * s, 8 * s), cyanPaint); // Right eye
+    
+    // NEW: Blocky Digital Smile :)
+    canvas.drawRect(Rect.fromLTWH(32 * s, 25 * s, 4 * s, 4 * s), cyanPaint); // Left corner of smile
+    canvas.drawRect(Rect.fromLTWH(50 * s, 25 * s, 4 * s, 4 * s), cyanPaint); // Right corner of smile
+    canvas.drawRect(Rect.fromLTWH(36 * s, 28 * s, 14 * s, 4 * s), cyanPaint); // Bottom curve of smile
 
+    canvas.restore();
+  }
+  void _drawArm(Canvas canvas, Paint darkPaint, Paint suitPaint, double x, double y, double angle) {
+    final s = _scale;
+    canvas.save();
+    canvas.translate(x, y);
+    canvas.rotate(angle * 3.14159 / 180);
+    // Sleeve
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(-6 * s, -5 * s, 12 * s, 20 * s),
+        Radius.circular(4 * s),
+      ),
+      suitPaint,
+    );
+    // Glove
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(-7 * s, 12 * s, 14 * s, 10 * s),
+        Radius.circular(3 * s),
+      ),
+      darkPaint,
+    );
     canvas.restore();
   }
 
@@ -247,20 +251,22 @@ class Player extends PositionComponent
     canvas.save();
     canvas.translate(x, y);
     canvas.rotate(angle * 3.14159 / 180);
+    
+    // Leg base
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(-5 * s, 0, 11 * s, 18 * s),
-        Radius.circular(5 * s),
+        Rect.fromLTWH(-6 * s, 0, 12 * s, 15 * s),
+        Radius.circular(3 * s),
       ),
       paint,
     );
     // Boot
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(-6 * s, 14 * s, 13 * s, 7 * s),
-        Radius.circular(3 * s),
+        Rect.fromLTWH(-8 * s, 12 * s, 18 * s, 10 * s),
+        Radius.circular(4 * s),
       ),
-      Paint()..color = const Color(0xFF00FFFF).withOpacity(0.7),
+      Paint()..color = const Color(0xFF1B1B2F), // Darker base for boots
     );
     canvas.restore();
   }
